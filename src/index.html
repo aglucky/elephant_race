@@ -223,6 +223,10 @@
             
             getElement('results').innerHTML = html;
             populateElephantSelectors(numElephants, minGroups, k);
+            
+            // Initialize search functionality immediately for both tabs
+            initializeSearch();
+            initializeGroupSearch();
         }
         
         function toggleGroup(groupIndex) {
