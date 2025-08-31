@@ -114,36 +114,205 @@
                 </div>
             `;
             
-            if (numElephants <= 1000) {
-                html += `<div class="results"><h3>Elephant Groups</h3>`;
-                groups.forEach((group, index) => {
-                    if (group.length > 0) {
-                        html += `
-                            <div class="group">
-                                <div class="group-title">Group ${index + 1}</div>
-                                <div class="elephants">
-                                    ${group.map(elephantNum => 
-                                        `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
-                                    ).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
-                html += '</div>';
-            } else {
-                html += `
-                    <div class="results">
-                        <div class="large-number-notice">
-                            <h3>📊 Groups Generated Successfully</h3>
-                            <p><em>Individual elephant assignments are hidden for numbers above 1,000 to maintain performance.</em></p>
-                        </div>
+            html += `
+                <div class="results-tabs">
+                    <div class="tab-buttons">
+                        <button class="tab-button active" onclick="switchTab('groupings')">🐘 Elephant Groups</button>
+                        <button class="tab-button" onclick="switchTab('encodings')">🔢 Individual Encodings</button>
                     </div>
-                `;
-            }
+                    
+                    <div id="groupings-tab" class="tab-content active">
+                        ${numElephants <= 1000 ? 
+                            groups.map((group, index) => {
+                                if (group.length > 0) {
+                                    const isCollapsed = true; // Start collapsed by default
+                                    const elephantsPerRow = 10; // Assume 10 elephants per row for layout
+                                    const totalRows = Math.ceil(group.length / elephantsPerRow);
+                                    const hasMultipleRows = totalRows > 2;
+                                    
+                                    if (hasMultipleRows) {
+                                        // Show only first 2 rows worth of elephants
+                                        const visibleElephants = group.slice(0, elephantsPerRow * 2);
+                                        const hiddenElephants = group.slice(elephantsPerRow * 2);
+                                        
+                                        return `
+                                            <div class="group" data-group-index="${index}">
+                                                <div class="group-header" onclick="toggleGroup(${index})">
+                                                    <div class="group-title">Group ${index + 1}</div>
+                                                    <div class="group-controls">
+                                                        <span class="elephant-count">${group.length} elephants (${totalRows} rows)</span>
+                                                        <span class="expand-icon ${isCollapsed ? 'collapsed' : 'expanded'}">▼</span>
+                                                    </div>
+                                                </div>
+                                                <div class="elephants">
+                                                    ${visibleElephants.map(elephantNum => 
+                                                        `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                                    ).join('')}
+                                                    ${hiddenElephants.map(elephantNum => 
+                                                        `<div class="elephant hidden-elephant" data-group-index="${index}" style="display: ${isCollapsed ? 'none' : 'flex'}">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                                    ).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        // Show all elephants if 2 rows or less
+                                        return `
+                                            <div class="group">
+                                                <div class="group-title">Group ${index + 1}</div>
+                                                <div class="elephants">
+                                                    ${group.map(elephantNum => 
+                                                        `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                                    ).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                }
+                                return '';
+                            }).join('') : 
+                            `<div class="large-number-notice">
+                                <h3>📊 Groups Generated Successfully</h3>
+                                <p><em>Individual elephant assignments are hidden for numbers above 1,000 to maintain performance.</em></p>
+                            </div>`
+                        }
+                    </div>
+                    
+                    <div id="encodings-tab" class="tab-content">
+                        ${numElephants <= 1000 ? 
+                            `<div class="encodings-search">
+                                <input type="text" id="elephantSearch" placeholder="Search elephant number..." class="search-input">
+                                <div class="search-info">Showing <span id="visibleCount">${numElephants}</span> of ${numElephants} elephants</div>
+                            </div>
+                            <div class="encodings-grid" id="encodingsGrid">
+                                ${Array.from({length: numElephants}, (_, i) => {
+                                    const elephantNum = i + 1;
+                                    const encoding = getEncodings(minGroups, k)[i];
+                                    if (encoding) {
+                                        return `
+                                            <div class="elephant-encoding" data-elephant-number="${elephantNum}">
+                                                <div class="elephant-header">
+                                                    <span class="elephant-icon">🐘</span>
+                                                    <span class="elephant-number">${elephantNum}</span>
+                                                </div>
+                                                <div class="encoding-display">
+                                                    ${encoding.split('').map((bit, bitIndex) => 
+                                                        `<span class="encoding-bit ${bit === '1' ? 'active' : 'inactive'}" title="Group ${bitIndex + 1}">${bit}</span>`
+                                                    ).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                    return '';
+                                }).join('')}
+                            </div>` : 
+                            `<div class="large-number-notice">
+                                <h3>🔢 Encodings Available</h3>
+                                <p><em>Individual elephant encodings are hidden for numbers above 1,000 to maintain performance.</em></p>
+                                <p>Use the comparison tool above to view specific elephant encodings.</p>
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
             
             getElement('results').innerHTML = html;
             populateElephantSelectors(numElephants, minGroups, k);
+        }
+        
+        function toggleGroup(groupIndex) {
+            const group = document.querySelector(`[data-group-index="${groupIndex}"]`);
+            if (!group) return;
+            
+            const hiddenElephants = group.querySelectorAll('.hidden-elephant');
+            const expandIcon = group.querySelector('.expand-icon');
+            
+            if (hiddenElephants.length > 0) {
+                const isCurrentlyHidden = hiddenElephants[0].style.display === 'none';
+                
+                if (isCurrentlyHidden) {
+                    // Expand the group - show all hidden elephants
+                    hiddenElephants.forEach(elephant => {
+                        elephant.style.display = 'flex';
+                    });
+                    if (expandIcon) {
+                        expandIcon.classList.remove('collapsed');
+                        expandIcon.classList.add('expanded');
+                        expandIcon.textContent = '▲';
+                    }
+                } else {
+                    // Collapse the group - hide all hidden elephants
+                    hiddenElephants.forEach(elephant => {
+                        elephant.style.display = 'none';
+                    });
+                    if (expandIcon) {
+                        expandIcon.classList.remove('expanded');
+                        expandIcon.classList.add('collapsed');
+                        expandIcon.textContent = '▼';
+                    }
+                }
+            }
+        }
+        
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Initialize search functionality when encodings tab is opened
+            if (tabName === 'encodings') {
+                initializeSearch();
+            }
+        }
+        
+        function searchElephants() {
+            const searchInput = document.getElementById('elephantSearch');
+            const searchTerm = searchInput.value.trim();
+            const elephantCards = document.querySelectorAll('.elephant-encoding');
+            const visibleCountSpan = document.getElementById('visibleCount');
+            
+            let visibleCount = 0;
+            
+            elephantCards.forEach(card => {
+                const elephantNumber = card.getAttribute('data-elephant-number');
+                
+                if (searchTerm === '' || elephantNumber.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Update the visible count display
+            if (visibleCountSpan) {
+                visibleCountSpan.textContent = visibleCount;
+            }
+        }
+        
+        function initializeSearch() {
+            const searchInput = document.getElementById('elephantSearch');
+            if (searchInput) {
+                // Clear any existing event listeners
+                searchInput.removeEventListener('input', searchElephants);
+                // Add new event listener
+                searchInput.addEventListener('input', searchElephants);
+                // Clear the search input
+                searchInput.value = '';
+                // Reset the display to show all elephants
+                searchElephants();
+            }
         }
         
         function populateElephantSelectors(numElephants) {
