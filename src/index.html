@@ -123,53 +123,59 @@
                     
                     <div id="groupings-tab" class="tab-content active">
                         ${numElephants <= 1000 ? 
-                            groups.map((group, index) => {
-                                if (group.length > 0) {
-                                    const isCollapsed = true; // Start collapsed by default
-                                    const elephantsPerRow = 10; // Assume 10 elephants per row for layout
-                                    const totalRows = Math.ceil(group.length / elephantsPerRow);
-                                    const hasMultipleRows = totalRows > 2;
-                                    
-                                    if (hasMultipleRows) {
-                                        // Show only first 2 rows worth of elephants
-                                        const visibleElephants = group.slice(0, elephantsPerRow * 2);
-                                        const hiddenElephants = group.slice(elephantsPerRow * 2);
+                            `<div class="groups-search">
+                                <input type="text" id="groupSearch" placeholder="Search elephant number in groups..." class="search-input">
+                                <div class="search-info">Showing <span id="visibleGroupsCount">${groups.filter(g => g.length > 0).length}</span> of ${groups.filter(g => g.length > 0).length} groups</div>
+                            </div>
+                            <div class="groups-container" id="groupsContainer">
+                                ${groups.map((group, index) => {
+                                    if (group.length > 0) {
+                                        const isCollapsed = true; // Start collapsed by default
+                                        const elephantsPerRow = 10; // Assume 10 elephants per row for layout
+                                        const totalRows = Math.ceil(group.length / elephantsPerRow);
+                                        const hasMultipleRows = totalRows > 2;
                                         
-                                        return `
-                                            <div class="group" data-group-index="${index}">
-                                                <div class="group-header" onclick="toggleGroup(${index})">
-                                                    <div class="group-title">Group ${index + 1}</div>
-                                                    <div class="group-controls">
-                                                        <span class="elephant-count">${group.length} elephants (${totalRows} rows)</span>
-                                                        <span class="expand-icon ${isCollapsed ? 'collapsed' : 'expanded'}">▼</span>
+                                        if (hasMultipleRows) {
+                                            // Show only first 2 rows worth of elephants
+                                            const visibleElephants = group.slice(0, elephantsPerRow * 2);
+                                            const hiddenElephants = group.slice(elephantsPerRow * 2);
+                                            
+                                            return `
+                                                <div class="group" data-group-index="${index}" data-group-elephants="${group.join(',')}">
+                                                    <div class="group-header" onclick="toggleGroup(${index})">
+                                                        <div class="group-title">Group ${index + 1}</div>
+                                                        <div class="group-controls">
+                                                            <span class="elephant-count">${group.length} elephants (${totalRows} rows)</span>
+                                                            <span class="expand-icon ${isCollapsed ? 'collapsed' : 'expanded'}">▼</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="elephants">
+                                                        ${visibleElephants.map(elephantNum => 
+                                                            `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                                        ).join('')}
+                                                        ${hiddenElephants.map(elephantNum => 
+                                                            `<div class="elephant hidden-elephant" data-group-index="${index}" style="display: ${isCollapsed ? 'none' : 'flex'}">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                                        ).join('')}
                                                     </div>
                                                 </div>
-                                                <div class="elephants">
-                                                    ${visibleElephants.map(elephantNum => 
-                                                        `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
-                                                    ).join('')}
-                                                    ${hiddenElephants.map(elephantNum => 
-                                                        `<div class="elephant hidden-elephant" data-group-index="${index}" style="display: ${isCollapsed ? 'none' : 'flex'}">🐘<span class="elephant-number">${elephantNum}</span></div>`
-                                                    ).join('')}
+                                            `;
+                                        } else {
+                                            // Show all elephants if 2 rows or less
+                                            return `
+                                                <div class="group" data-group-elephants="${group.join(',')}">
+                                                    <div class="group-title">Group ${index + 1}</div>
+                                                    <div class="elephants">
+                                                        ${group.map(elephantNum => 
+                                                            `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                                        ).join('')}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        `;
-                                    } else {
-                                        // Show all elephants if 2 rows or less
-                                        return `
-                                            <div class="group">
-                                                <div class="group-title">Group ${index + 1}</div>
-                                                <div class="elephants">
-                                                    ${group.map(elephantNum => 
-                                                        `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
-                                                    ).join('')}
-                                                </div>
-                                            </div>
-                                        `;
+                                            `;
+                                        }
                                     }
-                                }
-                                return '';
-                            }).join('') : 
+                                    return '';
+                                }).join('')}
+                            </div>` : 
                             `<div class="large-number-notice">
                                 <h3>📊 Groups Generated Successfully</h3>
                                 <p><em>Individual elephant assignments are hidden for numbers above 1,000 to maintain performance.</em></p>
@@ -253,6 +259,25 @@
             }
         }
         
+        function collapseAllGroups() {
+            const groups = document.querySelectorAll('.group');
+            groups.forEach(group => {
+                const hiddenElephants = group.querySelectorAll('.hidden-elephant');
+                const expandIcon = group.querySelector('.expand-icon');
+                
+                if (hiddenElephants.length > 0) {
+                    hiddenElephants.forEach(elephant => {
+                        elephant.style.display = 'none';
+                    });
+                    if (expandIcon) {
+                        expandIcon.classList.remove('expanded');
+                        expandIcon.classList.add('collapsed');
+                        expandIcon.textContent = '▼';
+                    }
+                }
+            });
+        }
+        
         function switchTab(tabName) {
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -273,6 +298,11 @@
             // Initialize search functionality when encodings tab is opened
             if (tabName === 'encodings') {
                 initializeSearch();
+            }
+            
+            // Initialize group search functionality when groupings tab is opened
+            if (tabName === 'groupings') {
+                initializeGroupSearch();
             }
         }
         
@@ -312,6 +342,65 @@
                 searchInput.value = '';
                 // Reset the display to show all elephants
                 searchElephants();
+            }
+        }
+        
+        function searchGroups() {
+            const searchInput = document.getElementById('groupSearch');
+            const searchTerm = searchInput.value.trim();
+            const groupElements = document.querySelectorAll('.group');
+            const visibleGroupsCountSpan = document.getElementById('visibleGroupsCount');
+            
+            let visibleCount = 0;
+            
+            groupElements.forEach(group => {
+                const elephants = group.querySelectorAll('.elephant');
+                let hasVisibleElephants = false;
+                
+                elephants.forEach(elephant => {
+                    const elephantNumber = elephant.querySelector('.elephant-number').textContent;
+                    
+                    if (searchTerm === '' || elephantNumber.includes(searchTerm)) {
+                        elephant.style.display = 'flex';
+                        hasVisibleElephants = true;
+                    } else {
+                        elephant.style.display = 'none';
+                    }
+                });
+                
+                // Show group if it has any visible elephants
+                if (hasVisibleElephants) {
+                    group.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+            
+            // Update the visible count display
+            if (visibleGroupsCountSpan) {
+                visibleGroupsCountSpan.textContent = visibleCount;
+            }
+            
+            // If search is cleared, collapse all groups
+            if (searchTerm === '') {
+                collapseAllGroups();
+            }
+        }
+        
+        function initializeGroupSearch() {
+            const searchInput = document.getElementById('groupSearch');
+            if (searchInput) {
+                // Clear any existing event listeners
+                searchInput.removeEventListener('input', searchGroups);
+                // Add new event listener
+                searchInput.addEventListener('input', searchGroups);
+                // Clear the search input
+                searchInput.value = '';
+                // Collapse all groups by default
+                collapseAllGroups();
+                // Reset the display to show all elephants
+                searchGroups();
             }
         }
         
