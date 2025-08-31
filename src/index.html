@@ -31,14 +31,14 @@
                 <div class="elephant-selector">
                     <label for="elephant1">First Elephant:</label>
                     <div class="combobox-container">
-                        <input type="text" id="elephant1Combobox" class="combobox-input" placeholder="Type elephant number or name..." autocomplete="off">
+                        <input type="text" id="elephant1Combobox" class="combobox-input" placeholder="Search elephant..." autocomplete="off">
                         <div id="elephant1Dropdown" class="combobox-dropdown" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="elephant-selector">
                     <label for="elephant2">Second Elephant:</label>
                     <div class="combobox-container">
-                        <input type="text" id="elephant2Combobox" class="combobox-input" placeholder="Type elephant number or name..." autocomplete="off">
+                        <input type="text" id="elephant2Combobox" class="combobox-input" placeholder="Search elephant..." autocomplete="off">
                         <div id="elephant2Dropdown" class="combobox-dropdown" style="display: none;"></div>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
                     <div id="groupings-tab" class="tab-content active">
                         ${numElephants <= 1000 ? 
                             `<div class="groups-search">
-                                <input type="text" id="groupSearch" placeholder="Search elephant number in groups..." class="search-input">
+                                <input type="text" id="groupSearch" placeholder="Search elephant..." class="search-input">
                                 <div class="search-info">Showing <span id="visibleGroupsCount">${groups.filter(g => g.length > 0).length}</span> of ${groups.filter(g => g.length > 0).length} groups</div>
                             </div>
                             <div class="groups-container" id="groupsContainer">
@@ -202,7 +202,7 @@
                     <div id="encodings-tab" class="tab-content">
                         ${numElephants <= 1000 ? 
                             `<div class="encodings-search">
-                                <input type="text" id="elephantSearch" placeholder="Search elephant number..." class="search-input">
+                                <input type="text" id="elephantSearch" placeholder="Search elephant..." class="search-input">
                                 <div class="search-info">Showing <span id="visibleCount">${numElephants}</span> of ${numElephants} elephants</div>
                             </div>
                             <div class="encodings-grid" id="encodingsGrid">
@@ -228,7 +228,7 @@
                                 }).join('')}
                             </div>` : 
                             `<div class="large-number-notice">
-                                <h3>🔢 Encodings Available</h3>
+                                <h3>🔢 Encodings Generated Successfully</h3>
                                 <p><em>Individual elephant encodings are hidden for numbers above 1,000 to maintain performance.</em></p>
                                 <p>Use the comparison tool above to view specific elephant encodings.</p>
                             </div>`
