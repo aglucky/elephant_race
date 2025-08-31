@@ -1,0 +1,28 @@
+{
+  "name": "elephant-race-visualizer",
+  "version": "1.0.0",
+  "description": "A web application for visualizing elephant race groupings using combinatorial mathematics",
+  "main": "src/index.html",
+  "scripts": {
+    "dev": "bun --hot src/index.html",
+    "start": "bun run --hot src/index.html",
+    "build": "echo 'Static HTML app - no build step needed'",
+    "preview": "bun run --hot src/index.html"
+  },
+  "keywords": [
+    "elephant",
+    "race",
+    "combinatorics",
+    "mathematics",
+    "visualization",
+    "web-app"
+  ],
+  "author": "Adam Gluck",
+  "license": "MIT",
+  "devDependencies": {
+    "bun": "^1.0.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}

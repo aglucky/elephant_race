@@ -33,10 +33,24 @@ The solution uses **Sperner's Theorem** and binary encodings to create a minimal
 - **Mathematical Insights**: Displays the minimum groups needed and optimal grouping strategy
 - **Responsive Design**: Works on desktop and mobile devices
 - **Performance Optimized**: Handles large numbers efficiently
+- **Simplified Codebase**: Clean, maintainable code with modern JavaScript practices
 
 ## 🛠️ How to Use
 
-1. **Open the Application**: Load `index.html` in any modern web browser
+### Quick Start
+```bash
+# Install dependencies (if you want to use bun for development)
+bun install
+
+# Start development server
+bun run dev
+
+# Or simply open the HTML file in your browser
+open src/index.html
+```
+
+### Manual Usage
+1. **Open the Application**: Load `src/index.html` in any modern web browser
 2. **Set Elephant Count**: Use the input field or +/- buttons to set the number of elephants
 3. **View Results**: See the optimal grouping strategy and statistics
 4. **Explore Groups**: For numbers ≤ 1000, view individual elephant assignments to each group
@@ -55,11 +69,9 @@ The application displays:
 
 ### 1. Finding Minimum Groups
 ```javascript
-const getMinNumGroups = (num_elephants) => {
-    for (let n = 0; n <= num_elephants; n++) {
-        if (binomialCoefficient(n, Math.floor(n/2)) >= num_elephants) {
-            return n;
-        }
+const getMinNumGroups = (numElephants) => {
+    for (let n = 0; n <= numElephants; n++) {
+        if (binomialCoefficient(n, Math.floor(n/2)) >= numElephants) return n;
     }
     throw new Error("No valid k found");
 };
@@ -67,11 +79,11 @@ const getMinNumGroups = (num_elephants) => {
 
 ### 2. Generating Binary Encodings
 ```javascript
-const getEncodings = (min_groups, k) => {
-    let validEncodings = [];
-    for (let i = 0; i <= Math.pow(2, min_groups); i++) {
-        const binaryString = i.toString(2).padStart(min_groups, '0');
-        if (binaryString.split('').filter(x => x == "1").length == k) {
+const getEncodings = (minGroups, k) => {
+    const validEncodings = [];
+    for (let i = 0; i <= Math.pow(2, minGroups); i++) {
+        const binaryString = i.toString(2).padStart(minGroups, '0');
+        if (binaryString.split('').filter(x => x === "1").length === k) {
             validEncodings.push(binaryString);
         }
     }
@@ -88,9 +100,12 @@ Each elephant gets assigned to groups based on their binary encoding:
 
 ```
 elephant/
-├── index.html          # Main application interface
-├── elephant-worker.js  # Web Worker for calculations
-└── README.md          # This file
+├── src/
+│   ├── index.html          # Main application interface
+│   ├── elephant-worker.js  # Web Worker for calculations
+│   └── styles.css          # Application styling
+├── package.json            # Project configuration and scripts
+└── README.md              # This file
 ```
 
 ## 🌐 Browser Compatibility
@@ -125,6 +140,27 @@ This problem demonstrates several important concepts:
 3. **Sperner's Theorem**: Mathematical foundation for optimal grouping
 4. **Information Theory**: Minimum bits needed to distinguish between options
 
+## 🚀 Development
+
+### Code Simplifications Made
+- **Consolidated utility functions** using arrow functions and modern JavaScript
+- **Eliminated duplicate code** in DOM manipulation
+- **Streamlined CSS** by combining similar selectors
+- **Simplified worker logic** with cleaner function definitions
+- **Added package.json** for proper project management
+
+### Running the Project
+```bash
+# Development mode with hot reload
+bun run dev
+
+# Or use the start script
+bun run start
+
+# Build (static HTML - no build step needed)
+bun run build
+```
+
 ## 📚 Further Reading
 
 - [The Great Elephant Race Blog Post](https://adamgluck.com/posts/elephant_race)
@@ -138,6 +174,7 @@ Feel free to:
 - Suggest improvements
 - Add new mathematical insights
 - Optimize the algorithms
+- Help simplify the code further
 
 ## 📄 License
 
@@ -147,4 +184,4 @@ This project is open source and available under the MIT License.
 
 **Happy Elephant Racing! 🐘🏁**
 
-*Built with vanilla JavaScript, HTML, and CSS. No external dependencies required.*
+*Built with vanilla JavaScript, HTML, and CSS. Optimized and simplified for maintainability.*

@@ -25,51 +25,61 @@
             </div>
         </div>
         
+        <div class="comparison-section">
+            <h3>🐘 Simulation</h3>
+            <div class="comparison-controls">
+                <div class="elephant-selector">
+                    <label for="elephant1">First Elephant:</label>
+                    <select id="elephant1" onchange="compareElephants()">
+                        <option value="">Select elephant...</option>
+                    </select>
+                </div>
+                <div class="elephant-selector">
+                    <label for="elephant2">Second Elephant:</label>
+                    <select id="elephant2" onchange="compareElephants()">
+                        <option value="">Select elephant...</option>
+                    </select>
+                </div>
+            </div>
+            <div id="comparison-results" class="comparison-results"></div>
+        </div>
+        
         <div id="results"></div>
     </div>
 
-            <div id="loadingOverlay" class="loading-overlay">
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Calculating elephant groups...</div>
-                <div class="loading-subtext">This may take a moment for large numbers</div>
-            </div>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Calculating elephant groups...</div>
+            <div class="loading-subtext">This may take a moment for large numbers</div>
         </div>
+    </div>
 
     <script>
         const maxElephants = 1_000_000;
         let worker = null;
         
-        function showLoading() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-        }
-        
-        function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+        // Utility functions
+        const showLoading = () => document.getElementById('loadingOverlay').style.display = 'flex';
+        const hideLoading = () => document.getElementById('loadingOverlay').style.display = 'none';
+        const getElement = id => document.getElementById(id);
         
         function initializeWorker() {
             if (typeof Worker !== 'undefined') {
                 try {
                     worker = new Worker('elephant-worker.js');
-                    worker.onmessage = function(e) {
+                    worker.onmessage = e => {
                         hideLoading();
-                        if (e.data.success) {
-                            displayResults(e.data.result);
-                        } else {
-                            document.getElementById('results').innerHTML = 
-                                `<div class="error">Error: ${e.data.error}</div>`;
-                        }
+                        e.data.success ? displayResults(e.data.result) : 
+                            getElement('results').innerHTML = `<div class="error">Error: ${e.data.error}</div>`;
                     };
-                    worker.onerror = function(error) {
+                    worker.onerror = error => {
                         hideLoading();
-                        document.getElementById('results').innerHTML = 
-                            '<div class="error">Error: Worker failed to execute.</div>';
+                        getElement('results').innerHTML = '<div class="error">Error: Worker failed to execute.</div>';
                         console.error('Worker error:', error);
                     };
                 } catch (error) {
                     console.error('Failed to create worker:', error);
-                    // Fallback to synchronous calculation
                     worker = null;
                 }
             }
@@ -102,35 +112,22 @@
                 </div>
             `;
             
-            // Only show actual groups for numbers 1000 or less
             if (numElephants <= 1000) {
-                html += `<div class="results">
-                    <h3>Elephant Groups</h3>
-                `;
-                
+                html += `<div class="results"><h3>Elephant Groups</h3>`;
                 groups.forEach((group, index) => {
                     if (group.length > 0) {
                         html += `
                             <div class="group">
                                 <div class="group-title">Group ${index + 1}</div>
                                 <div class="elephants">
-                        `;
-                        
-                        group.forEach(elephantNum => {
-                            html += `
-                                <div class="elephant">
-                                    🐘<span class="elephant-number">${elephantNum}</span>
-                                </div>
-                            `;
-                        });
-                        
-                        html += `
+                                    ${group.map(elephantNum => 
+                                        `<div class="elephant">🐘<span class="elephant-number">${elephantNum}</span></div>`
+                                    ).join('')}
                                 </div>
                             </div>
                         `;
                     }
                 });
-                
                 html += '</div>';
             } else {
                 html += `
@@ -143,18 +140,114 @@
                 `;
             }
             
-            document.getElementById('results').innerHTML = html;
+            getElement('results').innerHTML = html;
+            populateElephantSelectors(numElephants, minGroups, k);
+        }
+        
+        function populateElephantSelectors(numElephants) {
+            const [elephant1Select, elephant2Select] = ['elephant1', 'elephant2'].map(id => getElement(id));
+            const baseOption = '<option value="">Select elephant...</option>';
+            
+            elephant1Select.innerHTML = baseOption;
+            elephant2Select.innerHTML = baseOption;
+            
+            for (let i = 1; i <= numElephants; i++) {
+                const option = `<option value="${i}">Elephant ${i}</option>`;
+                elephant1Select.insertAdjacentHTML('beforeend', option);
+                elephant2Select.insertAdjacentHTML('beforeend', option);
+            }
+            
+            getElement('comparison-results').innerHTML = '';
+        }
+        
+        function highlightFirstDifference(encoding1, encoding2) {
+            let highlightedEncoding = '';
+            let firstDifferenceFound = false;
+            
+            for (let i = 0; i < encoding1.length; i++) {
+                if (encoding1[i] === '1' && encoding2[i] === '0' && !firstDifferenceFound) {
+                    highlightedEncoding += `<span class="highlighted-bit">${encoding1[i]}</span>`;
+                    firstDifferenceFound = true;
+                } else {
+                    highlightedEncoding += encoding1[i];
+                }
+            }
+            
+            return highlightedEncoding;
+        }
+        
+        function generateSummary(encoding1, encoding2) {
+            for (let i = 0; i < encoding1.length; i++) {
+                if (encoding1[i] === '1' && encoding2[i] === '0') {
+                    const elephant1 = parseInt(document.getElementById('elephant1').value);
+                    const elephant2 = parseInt(document.getElementById('elephant2').value);
+                    return `Group ${i + 1} will have 1st place elephant (🐘${elephant1}) but not 2nd place elephant (🐘${elephant2})`;
+                }
+            }
+            return 'No key difference found';
+        }
+        
+        function compareElephants() {
+            const [elephant1, elephant2] = ['elephant1', 'elephant2'].map(id => parseInt(getElement(id).value));
+            
+            if (!elephant1 || !elephant2) {
+                getElement('comparison-results').innerHTML = '';
+                return;
+            }
+            
+            if (elephant1 === elephant2) {
+                getElement('comparison-results').innerHTML = 
+                    '<div class="comparison-error">Please select two different elephants to compare.</div>';
+                return;
+            }
+            
+            const numElephants = parseInt(getElement('elephantCount').value);
+            const minGroups = getMinNumGroups(numElephants);
+            const k = Math.floor(minGroups / 2);
+            const encodings = getEncodings(minGroups, k);
+            
+            const [encoding1, encoding2] = [encodings[elephant1 - 1], encodings[elephant2 - 1]];
+            
+            if (!encoding1 || !encoding2) {
+                getElement('comparison-results').innerHTML = 
+                    '<div class="comparison-error">Could not retrieve encodings for the selected elephants.</div>';
+                return;
+            }
+            
+            const hasDifferences = encoding1.split('').some((bit, i) => bit === '1' && encoding2[i] === '0');
+            
+            const html = `
+                <div class="comparison-display">
+                    <h4>Encoding Comparison</h4>
+                    <div class="encoding-comparison">
+                        <div class="encoding-side-by-side">
+                            <div class="encoding-item">
+                                <div class="encoding-label">1st place elephant</div>
+                                <div class="encoding-bits">${highlightFirstDifference(encoding1, encoding2)}</div>
+                            </div>
+                            <div class="encoding-item">
+                                <div class="encoding-label">2nd place elephant</div>
+                                <div class="encoding-bits">${encoding2}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-section">
+                        <div class="summary-text">${generateSummary(encoding1, encoding2)}</div>
+                    </div>
+                    
+                    ${!hasDifferences ? '<div class="no-differences">No differences found - 1st place elephant has no 1s that 2nd place elephant doesn\'t have.</div>' : ''}
+                </div>
+            `;
+            
+            getElement('comparison-results').innerHTML = html;
         }
         
         function visualizeElephants() {
-            const numElephants = parseInt(document.getElementById('elephantCount').value);
+            const numElephants = parseInt(getElement('elephantCount').value);
             
-            if (
-                !Number.isInteger(numElephants) ||
-                numElephants < 1 ||
-                numElephants > maxElephants
-            ) {
-                document.getElementById('results').innerHTML = 
+            if (!Number.isInteger(numElephants) || numElephants < 1 || numElephants > maxElephants) {
+                getElement('results').innerHTML = 
                     `<div class="error">Please enter a valid integer between 1 and ${maxElephants.toLocaleString()}.</div>`;
                 return;
             }
@@ -162,17 +255,14 @@
             showLoading();
             
             if (worker) {
-                // Use web worker for calculation
                 worker.postMessage({ numElephants });
             } else {
-                // Fallback to synchronous calculation
                 try {
                     const minGroups = getMinNumGroups(numElephants);
                     const k = Math.floor(minGroups / 2);
                     const encodings = getEncodings(minGroups, k);
                     let groups = Array.from({ length: minGroups }, () => []);
                     
-                    // Group the elephants
                     for (let group = 0; group < minGroups; group++) {
                         for (let elephant = 0; elephant < numElephants; elephant++) {
                             if (encodings[elephant] && encodings[elephant][group] === '1') {
@@ -181,20 +271,13 @@
                         }
                     }
                     
-                    const result = {
-                        numElephants,
-                        minGroups,
-                        k,
-                        encodings: encodings.length,
-                        groups
-                    };
-                    
+                    const result = { numElephants, minGroups, k, encodings: encodings.length, groups };
                     hideLoading();
                     displayResults(result);
                     
                 } catch (error) {
                     hideLoading();
-                    document.getElementById('results').innerHTML = 
+                    getElement('results').innerHTML = 
                         '<div class="error">Error: Could not generate groups for this number of elephants.</div>';
                 }
             }
@@ -202,18 +285,15 @@
         
         // Fallback functions for when worker is not available
         const binomialCoefficient = (n, k) => {
-            if (!Number.isInteger(n) || !Number.isInteger(k) || n < 0 || k < 0) {
-                return 0;
-            }
-            
+            if (!Number.isInteger(n) || !Number.isInteger(k) || n < 0 || k < 0) return 0;
             if (k === 0 || k === n) return 1;
             if (k === 1 || k === n - 1) return n;
             if (k > n) return 0;
             
             const effectiveK = Math.min(k, n - k);
-            const result = Array.from({ length: effectiveK }, (_, i) => i).reduce((acc, i) => {
-                return (acc * (n - i)) / (i + 1);
-            }, 1);
+            const result = Array.from({ length: effectiveK }, (_, i) => i).reduce((acc, i) => 
+                (acc * (n - i)) / (i + 1), 1
+            );
             return Math.round(result);
         };
 
@@ -237,31 +317,23 @@
             return validEncodings;
         };
         
-        function increaseElephants() {
-            const input = document.getElementById('elephantCount');
+        const changeElephants = (delta) => {
+            const input = getElement('elephantCount');
             const currentValue = parseInt(input.value) || 10;
-            if (currentValue < maxElephants) {
-                input.value = currentValue + 1;
+            const newValue = currentValue + delta;
+            if (newValue >= 1 && newValue <= maxElephants) {
+                input.value = newValue;
                 visualizeElephants();
             }
-        }
+        };
         
-        function decreaseElephants() {
-            const input = document.getElementById('elephantCount');
-            const currentValue = parseInt(input.value) || 10;
-            if (currentValue > 1) {
-                input.value = currentValue - 1;
-                visualizeElephants();
-            }
-        }
+        const increaseElephants = () => changeElephants(1);
+        const decreaseElephants = () => changeElephants(-1);
         
-        // Initialize with default value
+        // Initialize
         window.onload = function() {
-            // Set the max attribute dynamically from the variable
-            document.getElementById('elephantCount').max = maxElephants;
-            // Initialize the web worker
+            getElement('elephantCount').max = maxElephants;
             initializeWorker();
-            // Start with default visualization
             visualizeElephants();
         };
     </script>
