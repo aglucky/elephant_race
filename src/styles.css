@@ -222,9 +222,9 @@ input[type="number"]:focus {
     display: flex;
     gap: var(--spacing-xl);
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin-bottom: var(--spacing-xl);
-    align-items: center;
+    align-items: stretch;
 }
 
 .elephant-selector {
@@ -239,6 +239,7 @@ input[type="number"]:focus {
     border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all var(--transition-normal);
     min-width: 200px;
+    flex: 1;
 }
 
 .elephant-selector:hover {
@@ -569,6 +570,83 @@ input[type="number"]:focus {
     font-weight: var(--font-weight-medium);
 }
 
+/* Combobox Styles */
+.combobox-container {
+    position: relative;
+    min-width: 180px;
+}
+
+.combobox-input {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-base);
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--secondary-color);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-normal);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    outline: none;
+    cursor: text;
+}
+
+.combobox-input:focus {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+    transform: scale(1.02);
+}
+
+.combobox-input:hover {
+    background: white;
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: scale(1.02);
+}
+
+.combobox-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid var(--primary-color);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+    padding: var(--spacing-md) var(--spacing-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--secondary-color);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover,
+.dropdown-item.selected {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: var(--font-weight-medium);
+}
+
+.dropdown-item:first-child {
+    border-radius: 0;
+}
+
+.dropdown-item:last-child {
+    border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
@@ -586,10 +664,12 @@ input[type="number"]:focus {
     .comparison-controls {
         flex-direction: column;
         gap: var(--spacing-lg);
+        flex-wrap: wrap;
     }
     
     .elephant-selector {
         min-width: 100%;
+        flex: none;
     }
     
     .stats-grid {

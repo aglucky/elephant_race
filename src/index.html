@@ -30,15 +30,17 @@
             <div class="comparison-controls">
                 <div class="elephant-selector">
                     <label for="elephant1">First Elephant:</label>
-                    <select id="elephant1" onchange="compareElephants()">
-                        <option value="">Select elephant...</option>
-                    </select>
+                    <div class="combobox-container">
+                        <input type="text" id="elephant1Combobox" class="combobox-input" placeholder="Type elephant number or name..." autocomplete="off">
+                        <div id="elephant1Dropdown" class="combobox-dropdown" style="display: none;"></div>
+                    </div>
                 </div>
                 <div class="elephant-selector">
                     <label for="elephant2">Second Elephant:</label>
-                    <select id="elephant2" onchange="compareElephants()">
-                        <option value="">Select elephant...</option>
-                    </select>
+                    <div class="combobox-container">
+                        <input type="text" id="elephant2Combobox" class="combobox-input" placeholder="Type elephant number or name..." autocomplete="off">
+                        <div id="elephant2Dropdown" class="combobox-dropdown" style="display: none;"></div>
+                    </div>
                 </div>
             </div>
             <div id="comparison-results" class="comparison-results"></div>
@@ -145,19 +147,165 @@
         }
         
         function populateElephantSelectors(numElephants) {
-            const [elephant1Select, elephant2Select] = ['elephant1', 'elephant2'].map(id => getElement(id));
-            const baseOption = '<option value="">Select elephant...</option>';
+            // Store elephant data for combobox autocomplete
+            window.elephantData = Array.from({length: numElephants}, (_, i) => ({
+                id: i + 1,
+                label: `Elephant ${i + 1}`
+            }));
             
-            elephant1Select.innerHTML = baseOption;
-            elephant2Select.innerHTML = baseOption;
-            
-            for (let i = 1; i <= numElephants; i++) {
-                const option = `<option value="${i}">Elephant ${i}</option>`;
-                elephant1Select.insertAdjacentHTML('beforeend', option);
-                elephant2Select.insertAdjacentHTML('beforeend', option);
-            }
+            // Initialize comboboxes
+            initializeCombobox('elephant1Combobox', 'elephant1Dropdown', 1);
+            initializeCombobox('elephant2Combobox', 'elephant2Dropdown', 2);
             
             getElement('comparison-results').innerHTML = '';
+        }
+        
+        function initializeCombobox(inputId, dropdownId, elephantNumber) {
+            const input = getElement(inputId);
+            const dropdown = getElement(dropdownId);
+            
+            // Input event handlers
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                
+                // Check if input is a valid number
+                const numberInput = parseInt(query);
+                if (!isNaN(numberInput) && numberInput >= 1 && numberInput <= window.elephantData.length) {
+                    // Valid number input - find the elephant
+                    const elephant = window.elephantData.find(e => e.id === numberInput);
+                    if (elephant) {
+                        input.dataset.selectedId = elephant.id;
+                        dropdown.style.display = 'none';
+                        compareElephants();
+                        return;
+                    }
+                }
+                
+                if (query.length === 0) {
+                    dropdown.style.display = 'none';
+                    input.dataset.selectedId = '';
+                    return;
+                }
+                
+                const filteredElephants = window.elephantData.filter(elephant => 
+                    elephant.label.toLowerCase().includes(query) || 
+                    `🐘 ${elephant.label}`.toLowerCase().includes(query)
+                );
+                
+                showDropdown(dropdown, filteredElephants, elephantNumber);
+            });
+            
+            input.addEventListener('focus', () => {
+                if (input.value.length > 0) {
+                    const query = input.value.toLowerCase();
+                    const filteredElephants = window.elephantData.filter(elephant => 
+                        elephant.label.toLowerCase().includes(query) || 
+                        `🐘 ${elephant.label}`.toLowerCase().includes(query)
+                    );
+                    showDropdown(dropdown, filteredElephants, elephantNumber);
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+            
+            // Handle keyboard navigation
+            input.addEventListener('keydown', (e) => {
+                const visibleItems = dropdown.querySelectorAll('.dropdown-item');
+                const currentIndex = Array.from(visibleItems).findIndex(item => item.classList.contains('selected'));
+                
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        navigateDropdown(visibleItems, currentIndex, 1, elephantNumber);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        navigateDropdown(visibleItems, currentIndex, -1, elephantNumber);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (currentIndex >= 0 && visibleItems[currentIndex]) {
+                            selectElephant(visibleItems[currentIndex], elephantNumber);
+                        } else {
+                            // Try to handle direct number input
+                            const numberInput = parseInt(input.value);
+                            if (!isNaN(numberInput) && numberInput >= 1 && numberInput <= window.elephantData.length) {
+                                const elephant = window.elephantData.find(e => e.id === numberInput);
+                                if (elephant) {
+                                    selectElephant({ dataset: { id: elephant.id, label: elephant.label } }, elephantNumber);
+                                }
+                            }
+                        }
+                        break;
+                    case 'Escape':
+                        dropdown.style.display = 'none';
+                        input.blur();
+                        break;
+                }
+            });
+        }
+        
+        function showDropdown(dropdown, elephants, elephantNumber) {
+            if (elephants.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            
+            dropdown.innerHTML = elephants.map(elephant => 
+                `<div class="dropdown-item" data-id="${elephant.id}" data-label="${elephant.label}">
+                    🐘 ${elephant.label}
+                </div>`
+            ).join('');
+            
+            dropdown.style.display = 'block';
+            
+            // Add click handlers to dropdown items
+            dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', () => selectElephant(item, elephantNumber));
+                item.addEventListener('mouseenter', () => {
+                    dropdown.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                });
+            });
+        }
+        
+        function selectElephant(item, elephantNumber) {
+            const elephantId = parseInt(item.dataset.id);
+            const elephantLabel = item.dataset.label;
+            
+            // Update the combobox input
+            const inputId = `elephant${elephantNumber}Combobox`;
+            const input = getElement(inputId);
+            input.value = `🐘 ${elephantLabel}`;
+            input.dataset.selectedId = elephantId;
+            
+            // Hide dropdown
+            const dropdownId = `elephant${elephantNumber}Dropdown`;
+            getElement(dropdownId).style.display = 'none';
+            
+            // Trigger comparison
+            compareElephants();
+        }
+        
+        function navigateDropdown(items, currentIndex, direction, elephantNumber) {
+            if (items.length === 0) return;
+            
+            // Remove current selection
+            items.forEach(item => item.classList.remove('selected'));
+            
+            // Calculate new index
+            let newIndex = currentIndex + direction;
+            if (newIndex < 0) newIndex = items.length - 1;
+            if (newIndex >= items.length) newIndex = 0;
+            
+            // Add selection to new item
+            items[newIndex].classList.add('selected');
+            items[newIndex].scrollIntoView({ block: 'nearest' });
         }
         
         function highlightFirstDifference(encoding1, encoding2) {
@@ -179,8 +327,8 @@
         function generateSummary(encoding1, encoding2) {
             for (let i = 0; i < encoding1.length; i++) {
                 if (encoding1[i] === '1' && encoding2[i] === '0') {
-                    const elephant1 = parseInt(document.getElementById('elephant1').value);
-                    const elephant2 = parseInt(document.getElementById('elephant2').value);
+                    const elephant1 = parseInt(document.getElementById('elephant1Combobox').dataset.selectedId);
+                    const elephant2 = parseInt(document.getElementById('elephant2Combobox').dataset.selectedId);
                     return `Group ${i + 1} will have 1st place elephant (🐘${elephant1}) but not 2nd place elephant (🐘${elephant2})`;
                 }
             }
@@ -188,7 +336,10 @@
         }
         
         function compareElephants() {
-            const [elephant1, elephant2] = ['elephant1', 'elephant2'].map(id => parseInt(getElement(id).value));
+            const elephant1Input = getElement('elephant1Combobox');
+            const elephant2Input = getElement('elephant2Combobox');
+            const elephant1 = parseInt(elephant1Input.dataset.selectedId);
+            const elephant2 = parseInt(elephant2Input.dataset.selectedId);
             
             if (!elephant1 || !elephant2) {
                 getElement('comparison-results').innerHTML = '';
