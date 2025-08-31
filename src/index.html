@@ -71,12 +71,28 @@
                 try {
                     worker = new Worker('elephant-worker.js');
                     worker.onmessage = e => {
-                        hideLoading();
+                        // Clear the loading timeout if it exists
+                        if (window.currentLoadingTimeout) {
+                            clearTimeout(window.currentLoadingTimeout);
+                            window.currentLoadingTimeout = null;
+                        }
+                        // Only hide loading if it was actually shown
+                        if (window.loadingShown) {
+                            hideLoading();
+                        }
                         e.data.success ? displayResults(e.data.result) : 
                             getElement('results').innerHTML = `<div class="error">Error: ${e.data.error}</div>`;
                     };
                     worker.onerror = error => {
-                        hideLoading();
+                        // Clear the loading timeout if it exists
+                        if (window.currentLoadingTimeout) {
+                            clearTimeout(window.currentLoadingTimeout);
+                            window.currentLoadingTimeout = null;
+                        }
+                        // Only hide loading if it was actually shown
+                        if (window.loadingShown) {
+                            hideLoading();
+                        }
                         getElement('results').innerHTML = '<div class="error">Error: Worker failed to execute.</div>';
                         console.error('Worker error:', error);
                     };
@@ -145,7 +161,7 @@
                                                     <div class="group-header" onclick="toggleGroup(${index})">
                                                         <div class="group-title">Group ${index + 1}</div>
                                                         <div class="group-controls">
-                                                            <span class="elephant-count">${group.length} elephants (${totalRows} rows)</span>
+                                                            <span class="elephant-count">${group.length} elephants </span>
                                                             <span class="expand-icon ${isCollapsed ? 'collapsed' : 'expanded'}">▼</span>
                                                         </div>
                                                     </div>
@@ -665,10 +681,23 @@
                 return;
             }
             
-            showLoading();
+            let loadingShown = false;
+            
+            // Show loading screen after 1 second delay
+            const loadingTimeout = setTimeout(() => {
+                showLoading();
+                loadingShown = true;
+                // Also update global state for worker
+                if (worker) {
+                    window.loadingShown = true;
+                }
+            }, 1000);
             
             if (worker) {
                 worker.postMessage({ numElephants });
+                // Store the timeout ID and loading state so worker can access them
+                window.currentLoadingTimeout = loadingTimeout;
+                window.loadingShown = false;
             } else {
                 try {
                     const minGroups = getMinNumGroups(numElephants);
@@ -685,11 +714,19 @@
                     }
                     
                     const result = { numElephants, minGroups, k, encodings: encodings.length, groups };
-                    hideLoading();
+                    clearTimeout(loadingTimeout);
+                    // Only hide loading if it was actually shown
+                    if (loadingShown) {
+                        hideLoading();
+                    }
                     displayResults(result);
                     
                 } catch (error) {
-                    hideLoading();
+                    clearTimeout(loadingTimeout);
+                    // Only hide loading if it was actually shown
+                    if (loadingShown) {
+                        hideLoading();
+                    }
                     getElement('results').innerHTML = 
                         '<div class="error">Error: Could not generate groups for this number of elephants.</div>';
                 }
