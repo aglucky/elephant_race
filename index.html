@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elephant Race Visualizer</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .input-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .input-section label {
+            display: block;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .input-with-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        input[type="number"] {
+            padding: 12px 20px;
+            font-size: 18px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            width: 120px;
+            text-align: center;
+        }
+        
+        .decrease-btn, .increase-btn {
+            padding: 12px 16px;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            min-width: 50px;
+        }
+        
+        .decrease-btn:hover, .increase-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 18px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .results {
+            margin-top: 20px;
+        }
+        
+        .group {
+            background: #ecf0f1;
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .group-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .elephants {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .elephant {
+            font-size: 1.1em;
+            background: white;
+            padding: 3px 5px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .elephant-number {
+            font-size: 0.5em;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+        
+        .stats {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .stats h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            background: #fdf2f2;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .loading-subtext {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 8px;
+        }
+
+        .large-number-notice {
+            background: #f0f9eb;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #67c23a;
+            text-align: center;
+        }
+        
+        .large-number-notice h3 {
+            color: #67c23a;
+            margin-bottom: 10px;
+        }
+        
+        .large-number-notice p {
+            color: #909399;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .large-number-notice p:last-child {
+            margin-bottom: 0;
+            font-style: italic;
+            color: #a0a0a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐘 Elephant Race Visualizer 🐘</h1>
+        
+        <div class="input-section">
+            <label for="elephantCount">Number of elephants:</label>
+            <div class="input-with-buttons">
+                <button type="button" class="decrease-btn" onclick="decreaseElephants()">−</button>
+                <input type="number" id="elephantCount" placeholder="Number of elephants" min="1" value="10" oninput="visualizeElephants()">
+                <button type="button" class="increase-btn" onclick="increaseElephants()">+</button>
+            </div>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+            <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Calculating elephant groups...</div>
+                <div class="loading-subtext">This may take a moment for large numbers</div>
+            </div>
+        </div>
+
+    <script>
+        const maxElephants = 1_000_000;
+        let worker = null;
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        function initializeWorker() {
+            if (typeof Worker !== 'undefined') {
+                try {
+                    worker = new Worker('elephant-worker.js');
+                    worker.onmessage = function(e) {
+                        hideLoading();
+                        if (e.data.success) {
+                            displayResults(e.data.result);
+                        } else {
+                            document.getElementById('results').innerHTML = 
+                                `<div class="error">Error: ${e.data.error}</div>`;
+                        }
+                    };
+                    worker.onerror = function(error) {
+                        hideLoading();
+                        document.getElementById('results').innerHTML = 
+                            '<div class="error">Error: Worker failed to execute.</div>';
+                        console.error('Worker error:', error);
+                    };
+                } catch (error) {
+                    console.error('Failed to create worker:', error);
+                    // Fallback to synchronous calculation
+                    worker = null;
+                }
+            }
+        }
+        
+        function displayResults(result) {
+            const { numElephants, minGroups, k, encodings, groups } = result;
+            
+            let html = `
+                <div class="stats">
+                    <h3>Grouping Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">${numElephants}</div>
+                            <div class="stat-label">Total Elephants</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${minGroups}</div>
+                            <div class="stat-label">Minimum Groups</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${k}</div>
+                            <div class="stat-label">Elephants per Group</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${encodings}</div>
+                            <div class="stat-label">Valid Encodings</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Only show actual groups for numbers 1000 or less
+            if (numElephants <= 1000) {
+                html += `<div class="results">
+                    <h3>Elephant Groups</h3>
+                `;
+                
+                groups.forEach((group, index) => {
+                    if (group.length > 0) {
+                        html += `
+                            <div class="group">
+                                <div class="group-title">Group ${index + 1}</div>
+                                <div class="elephants">
+                        `;
+                        
+                        group.forEach(elephantNum => {
+                            html += `
+                                <div class="elephant">
+                                    🐘<span class="elephant-number">${elephantNum}</span>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+            } else {
+                html += `
+                    <div class="results">
+                        <div class="large-number-notice">
+                            <h3>📊 Groups Generated Successfully</h3>
+                            <p><em>Individual elephant assignments are hidden for numbers above 1,000 to maintain performance.</em></p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('results').innerHTML = html;
+        }
+        
+        function visualizeElephants() {
+            const numElephants = parseInt(document.getElementById('elephantCount').value);
+            
+            if (
+                !Number.isInteger(numElephants) ||
+                numElephants < 1 ||
+                numElephants > maxElephants
+            ) {
+                document.getElementById('results').innerHTML = 
+                    `<div class="error">Please enter a valid integer between 1 and ${maxElephants.toLocaleString()}.</div>`;
+                return;
+            }
+            
+            showLoading();
+            
+            if (worker) {
+                // Use web worker for calculation
+                worker.postMessage({ numElephants });
+            } else {
+                // Fallback to synchronous calculation
+                try {
+                    const minGroups = getMinNumGroups(numElephants);
+                    const k = Math.floor(minGroups / 2);
+                    const encodings = getEncodings(minGroups, k);
+                    let groups = Array.from({ length: minGroups }, () => []);
+                    
+                    // Group the elephants
+                    for (let group = 0; group < minGroups; group++) {
+                        for (let elephant = 0; elephant < numElephants; elephant++) {
+                            if (encodings[elephant] && encodings[elephant][group] === '1') {
+                                groups[group].push(elephant + 1);
+                            }
+                        }
+                    }
+                    
+                    const result = {
+                        numElephants,
+                        minGroups,
+                        k,
+                        encodings: encodings.length,
+                        groups
+                    };
+                    
+                    hideLoading();
+                    displayResults(result);
+                    
+                } catch (error) {
+                    hideLoading();
+                    document.getElementById('results').innerHTML = 
+                        '<div class="error">Error: Could not generate groups for this number of elephants.</div>';
+                }
+            }
+        }
+        
+        // Fallback functions for when worker is not available
+        const binomialCoefficient = (n, k) => {
+            if (!Number.isInteger(n) || !Number.isInteger(k) || n < 0 || k < 0) {
+                return 0;
+            }
+            
+            if (k === 0 || k === n) return 1;
+            if (k === 1 || k === n - 1) return n;
+            if (k > n) return 0;
+            
+            const effectiveK = Math.min(k, n - k);
+            const result = Array.from({ length: effectiveK }, (_, i) => i).reduce((acc, i) => {
+                return (acc * (n - i)) / (i + 1);
+            }, 1);
+            return Math.round(result);
+        };
+
+        const getMinNumGroups = (num_elephants) => {
+            for (let n = 0; n <= num_elephants; n++) {
+                if (binomialCoefficient(n, Math.floor(n/2)) >= num_elephants) {
+                    return n;
+                }
+            }
+            throw new Error("No valid k found");
+        };
+
+        const getEncodings = (min_groups, k) => {
+            let validEncodings = [];
+            for (let i = 0; i <= Math.pow(2, min_groups); i++) {
+                const binaryString = i.toString(2).padStart(min_groups, '0');
+                if (binaryString.split('').filter(x => x == "1").length == k) {
+                    validEncodings.push(binaryString);
+                }
+            }
+            return validEncodings;
+        };
+        
+        function increaseElephants() {
+            const input = document.getElementById('elephantCount');
+            const currentValue = parseInt(input.value) || 10;
+            if (currentValue < maxElephants) {
+                input.value = currentValue + 1;
+                visualizeElephants();
+            }
+        }
+        
+        function decreaseElephants() {
+            const input = document.getElementById('elephantCount');
+            const currentValue = parseInt(input.value) || 10;
+            if (currentValue > 1) {
+                input.value = currentValue - 1;
+                visualizeElephants();
+            }
+        }
+        
+        // Initialize with default value
+        window.onload = function() {
+            // Set the max attribute dynamically from the variable
+            document.getElementById('elephantCount').max = maxElephants;
+            // Initialize the web worker
+            initializeWorker();
+            // Start with default visualization
+            visualizeElephants();
+        };
+    </script>
+</body>
+</html>
